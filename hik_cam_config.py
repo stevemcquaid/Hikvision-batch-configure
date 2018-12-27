@@ -20,42 +20,57 @@ from Crypto.PublicKey import RSA
 
 cam_ips = [
     # (      OLD     ,        NEW      )
-    ('10.145.17.230', '10.145.17.200')
+    # ('192.168.2.51', 'South-East'),
+    ('192.168.2.50', 'North-East')
 ]
 
-new_gateway = '10.145.17.1'
-new_ntp = '10.1.5.3'
-time_zone_gmt_offset = '+5:00:00'
+new_gateway = '0.0.0.0'
+new_ntp = '192.168.2.1'
+time_zone_gmt_offset = '-5:00:00'
 
 admin_user_name = 'admin'
-admin_old_password = 'qwer1234'
-admin_new_password = 'qwer1234'
+admin_old_password = 'evelx118p'
+admin_new_password = 'evelx118p'
 
 video_user_name = 'video'
-video_user_password = 'qwer1234'
+video_user_password = '12345678'
 allow_videouser_downloading_records = False
 
 mjpeg_stream_width = 640
-mjpeg_stream_height = 480
-mjpeg_stream_framerate = 6
+mjpeg_stream_height = 360
+mjpeg_stream_framerate = 4
 
-h264_stream_width = 1280
-h264_stream_height = 720
+h264_stream_width = 2688
+h264_stream_height = 1520
 h264_stream_framerate = 10
 
 
 # ============================= MAIN WORK ===============================
 
-def set_cam_options(current_cam_ip, current_password, new_cam_ip):
+def set_cam_options(current_cam_ip, current_password, cam_name):
     # comment unneeded steps
-    set_video_user(current_cam_ip, current_password)
+    print("set_video_user...")
+    # set_video_user(current_cam_ip, current_password)
+    print("set_time...")
     set_time(current_cam_ip, current_password)
+    print("set_ntp...")
     set_ntp(current_cam_ip, current_password)
+    print("set_osd...")
     set_osd(current_cam_ip, current_password)
+    print("set_off_ip_ban_option...")
     set_off_ip_ban_option(current_cam_ip, current_password)
-    set_video(current_cam_ip, current_password)
-    set_ip(current_cam_ip, new_cam_ip, current_password)
+    print("set_video...")
+    set_video(current_cam_ip, current_password, cam_name)
+    print("set_ip...")
+    # set_ip(current_cam_ip, new_cam_ip, current_password)
+    set_ip(current_cam_ip, current_password)
+    print("set_image_settings...")
+    set_image_settings(current_cam_ip, current_password)
+    print("set_audio_settings...")
+    set_audio_settings(current_cam_ip, current_password)
+    print("set_password...")
     set_password(current_cam_ip, current_password)
+    print("reboot_cam...")
     reboot_cam(current_cam_ip)
 
 
@@ -66,6 +81,7 @@ time_url = '/ISAPI/System/time'
 ntp_url = '/ISAPI/System/time/ntpServers'
 osd_url = '/ISAPI/System/Video/inputs/channels/1/overlays'
 video_url = '/ISAPI/Streaming/channels'
+image_settings_url= '/ISAPI/Image/channels/1'
 ip_url = '/ISAPI/System/Network/interfaces/1/ipAddress'
 reboot_url = '/ISAPI/System/reboot'
 ip_ban_option_url = "/ISAPI/Security/illegalLoginLock"
@@ -79,7 +95,6 @@ permissons_url = '/ISAPI/Security/UserPermission'
 # =========================== REQUESTS =============================
 
 password_set_request = """\
-<?xml version="1.0" encoding="UTF-8"?>
 <User>
     <id>1</id>
     <userName>admin</userName>
@@ -88,7 +103,6 @@ password_set_request = """\
 """
 
 add_user_request = """\
-<?xml version="1.0" encoding="UTF-8"?>
 <User>
     <userName>video</userName>
     <userLevel>Viewer</userLevel>
@@ -118,24 +132,20 @@ ntp_set_request = """\
 """
 
 ip_set_request = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<IPAddress>
+<IPAddress  version="2.0">
 <ipVersion>dual</ipVersion>
-<addressingType>static</addressingType>
+<addressingType>dynamic</addressingType>
 <ipAddress>address</ipAddress>
 <subnetMask>255.255.255.0</subnetMask>
 <ipv6Address>::</ipv6Address>
 <bitMask>0</bitMask>
-<DefaultGateway>
-    <ipAddress>gateway</ipAddress>
+ <DefaultGateway>
+    <ipAddress>192.168.2.1</ipAddress>
     <ipv6Address>::</ipv6Address>
 </DefaultGateway>
 <PrimaryDNS>
-    <ipAddress>8.8.8.8</ipAddress>
+    <ipAddress>192.168.2.1</ipAddress>
 </PrimaryDNS>
-<SecondaryDNS>
-    <ipAddress>0.0.0.0</ipAddress>
-</SecondaryDNS>
 <Ipv6Mode>
     <ipV6AddressingType>ra</ipV6AddressingType>
     <ipv6AddressList>
@@ -149,6 +159,7 @@ ip_set_request = """\
 </Ipv6Mode>
 </IPAddress>
 """
+
 
 osd_set_request = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -172,7 +183,7 @@ osd_set_request = """\
         <displayWeek>false</displayWeek>
     </DateTimeOverlay>
     <channelNameOverlay>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
         <positionX>512</positionX>
         <positionY>64</positionY>
     </channelNameOverlay>
@@ -182,11 +193,10 @@ osd_set_request = """\
 """
 
 video_set_request = """\
-<?xml version="1.0" encoding="UTF-8"?>
-<StreamingChannelList>
-    <StreamingChannel>
-        <id>1</id>
-        <channelName>Camera 01</channelName>
+<StreamingChannelList version="2.0">
+    <StreamingChannel version="2.0">
+        <id>101</id>
+        <channelName>foobar</channelName>
         <enabled>true</enabled>
         <Transport>
             <maxPacketSize>1000</maxPacketSize>
@@ -213,6 +223,7 @@ video_set_request = """\
             </Multicast>
             <Security>
                 <enabled>true</enabled>
+                <certificateType>digest</certificateType>
             </Security>
         </Transport>
         <Video>
@@ -220,8 +231,8 @@ video_set_request = """\
             <videoInputChannelID>1</videoInputChannelID>
             <videoCodecType>H.264</videoCodecType>
             <videoScanType>progressive</videoScanType>
-            <videoResolutionWidth>1280</videoResolutionWidth>
-            <videoResolutionHeight>720</videoResolutionHeight>
+            <videoResolutionWidth>2688</videoResolutionWidth>
+            <videoResolutionHeight>1520</videoResolutionHeight>
             <videoQualityControlType>VBR</videoQualityControlType>
             <constantBitRate>1024</constantBitRate>
             <fixedQuality>60</fixedQuality>
@@ -232,68 +243,18 @@ video_set_request = """\
             <snapShotImageType>JPEG</snapShotImageType>
             <H264Profile>Main</H264Profile>
             <GovLength>50</GovLength>
+            <SVC>
+                <enabled>false</enabled>
+            </SVC>
             <PacketType>PS</PacketType>
             <PacketType>RTP</PacketType>
+            <smoothing>51</smoothing>
+            <SmartCodec>
+                <enabled>false</enabled>
+            </SmartCodec>
         </Video>
         <Audio>
-            <enabled>false</enabled>
-            <audioInputChannelID>1</audioInputChannelID>
-            <audioCompressionType>G.711ulaw</audioCompressionType>
-        </Audio>
-    </StreamingChannel>
-    <StreamingChannel>
-        <id>2</id>
-        <channelName>Camera 01</channelName>
-        <enabled>true</enabled>
-        <Transport>
-            <maxPacketSize>1000</maxPacketSize>
-            <ControlProtocolList>
-                <ControlProtocol>
-                    <streamingTransport>RTSP</streamingTransport>
-                </ControlProtocol>
-                <ControlProtocol>
-                    <streamingTransport>HTTP</streamingTransport>
-                </ControlProtocol>
-                <ControlProtocol>
-                    <streamingTransport>SHTTP</streamingTransport>
-                </ControlProtocol>
-            </ControlProtocolList>
-            <Unicast>
-                <enabled>true</enabled>
-                <rtpTransportType>RTP/TCP</rtpTransportType>
-            </Unicast>
-            <Multicast>
-                <enabled>true</enabled>
-                <destIPAddress>0.0.0.0</destIPAddress>
-                <videoDestPortNo>8600</videoDestPortNo>
-                <audioDestPortNo>8600</audioDestPortNo>
-            </Multicast>
-            <Security>
-                <enabled>true</enabled>
-            </Security>
-        </Transport>
-        <Video>
             <enabled>true</enabled>
-            <videoInputChannelID>1</videoInputChannelID>
-            <videoCodecType>MJPEG</videoCodecType>
-            <videoScanType>progressive</videoScanType>
-            <videoResolutionWidth>640</videoResolutionWidth>
-            <videoResolutionHeight>480</videoResolutionHeight>
-            <videoQualityControlType>VBR</videoQualityControlType>
-            <constantBitRate>256</constantBitRate>
-            <fixedQuality>60</fixedQuality>
-            <vbrUpperCap>256</vbrUpperCap>
-            <vbrLowerCap>32</vbrLowerCap>
-            <maxFrameRate>600</maxFrameRate>
-            <keyFrameInterval>8333</keyFrameInterval>
-            <snapShotImageType>JPEG</snapShotImageType>
-            <H264Profile>Main</H264Profile>
-            <GovLength>50</GovLength>
-            <PacketType>PS</PacketType>
-            <PacketType>RTP</PacketType>
-        </Video>
-        <Audio>
-            <enabled>false</enabled>
             <audioInputChannelID>1</audioInputChannelID>
             <audioCompressionType>G.711ulaw</audioCompressionType>
         </Audio>
@@ -351,6 +312,111 @@ video_user_permissions_set_request = """\
 </UserPermission>
 """
 
+image_settings_set_request = """\
+<ImageChannel xmlns="http://www.hikvision.com/ver20/XMLSchema" version="2.0">
+    <id>1</id>
+    <enabled>true</enabled>
+    <videoInputID>1</videoInputID>
+    <ImageFlip version="2.0">
+        <enabled>false</enabled>
+    </ImageFlip>
+    <IrcutFilter version="2.0">
+        <IrcutFilterType>auto</IrcutFilterType>
+        <nightToDayFilterLevel>4</nightToDayFilterLevel>
+        <nightToDayFilterTime>5</nightToDayFilterTime>
+    </IrcutFilter>
+    <Exposure version="2.0">
+        <ExposureType>manual</ExposureType>
+        <OverexposeSuppress>
+            <enabled>false</enabled>
+            <Type>MANUAL</Type>
+            <DistanceLevel>1</DistanceLevel>
+        </OverexposeSuppress>
+    </Exposure>
+    <powerLineFrequency version="2.0">
+        <powerLineFrequencyMode>60hz</powerLineFrequencyMode>
+    </powerLineFrequency>
+    <PTZ version="2.0">
+        <enabled>false</enabled>
+    </PTZ>
+    <corridor version="2.0">
+        <enabled>false</enabled>
+    </corridor>
+    <LaserLight version="2.0" />
+    <WDR version="2.0">
+        <mode>close</mode>
+        <WDRLevel>43</WDRLevel>
+    </WDR>
+    <BLC version="2.0">
+        <enabled>false</enabled>
+        <BLCRegionList>
+            <BLCRegion>
+                <id>1</id>
+                <RegionCoordinatesList>
+                    <RegionCoordinates>
+                        <positionX>0</positionX>
+                        <positionY>480</positionY>
+                    </RegionCoordinates>
+                    <RegionCoordinates>
+                        <positionX>0</positionX>
+                        <positionY>480</positionY>
+                    </RegionCoordinates>
+                    <RegionCoordinates>
+                        <positionX>0</positionX>
+                        <positionY>480</positionY>
+                    </RegionCoordinates>
+                    <RegionCoordinates>
+                        <positionX>0</positionX>
+                        <positionY>480</positionY>
+                    </RegionCoordinates>
+                </RegionCoordinatesList>
+            </BLCRegion>
+        </BLCRegionList>
+    </BLC>
+    <NoiseReduce version="2.0">
+        <mode>advanced</mode>
+        <AdvancedMode>
+            <FrameNoiseReduceLevel>47</FrameNoiseReduceLevel>
+            <InterFrameNoiseReduceLevel>48</InterFrameNoiseReduceLevel>
+        </AdvancedMode>
+    </NoiseReduce>
+    <WhiteBalance version="2.0">
+        <WhiteBalanceStyle>auto1</WhiteBalanceStyle>
+        <WhiteBalanceRed>0</WhiteBalanceRed>
+        <WhiteBalanceBlue>0</WhiteBalanceBlue>
+    </WhiteBalance>
+    <Sharpness version="2.0">
+        <SharpnessLevel>74</SharpnessLevel>
+    </Sharpness>
+    <Gain version="2.0">
+        <GainLevel>100</GainLevel>
+    </Gain>
+    <Shutter version="2.0">
+        <ShutterLevel>1/6</ShutterLevel>
+    </Shutter>
+    <Color version="2.0">
+        <brightnessLevel>34</brightnessLevel>
+        <contrastLevel>30</contrastLevel>
+        <saturationLevel>50</saturationLevel>
+    </Color>
+    <Dehaze version="2.0">
+        <DehazeMode>close</DehazeMode>
+    </Dehaze>
+</ImageChannel>
+"""
+
+audio_settings_set_request = """\
+<TwoWayAudioChannel version="2.0">
+    <id>1</id>
+    <enabled>true</enabled>
+    <audioCompressionType>G.711ulaw</audioCompressionType>
+    <audioInputType>MicIn</audioInputType>
+    <speakerVolume>80</speakerVolume>
+    <noisereduce>false</noisereduce>
+</TwoWayAudioChannel>
+"""
+
+
 # ==================================================================
 
 
@@ -385,40 +451,47 @@ def set_ntp(cam_ip, password):
     process_request(cam_ip, ntp_url, password, request_data, 'NTP set')
 
 
-def set_ip(cam_ip, new_ip, password):
+# def set_ip(cam_ip, new_ip, password):
+def set_ip(cam_ip, password):
     request = ElementTree.fromstring(ip_set_request)
 
-    ip_element = request.find('ipAddress')
-    ip_element.text = new_ip
+    addressing_type = request.find('addressingType')
+    addressing_type.text = "dynamic"
 
-    gateway_element = request.find('DefaultGateway')
-    gateway_ip_element = gateway_element.find('ipAddress')
-    gateway_ip_element.text = new_gateway
+    # ip_element = request.find('ipAddress')
+    # ip_element.text = new_ip
+    # gateway_element = request.find('DefaultGateway')
+    # gateway_ip_element = gateway_element.find('ipAddress')
+    # gateway_ip_element.text = new_gateway
 
     request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
 
-    message = 'IP set to %s, gateway %s' % (new_ip, new_gateway)
+    # message = 'IP set to %s, gateway %s' % (new_ip, new_gateway)
+    message = 'IP Address type set to %s' % ("DHCP")
 
     process_request(cam_ip, ip_url, password, request_data, message, 'Reboot Required')
 
 
-def set_video(cam_ip, password):
+def set_video(cam_ip, password, cam_name):
     request = ElementTree.fromstring(video_set_request)
 
     channels = request.findall('StreamingChannel')
     for channel_element in channels:
+        channel_name = channel_element.find('channelName')
+        channel_name.text = cam_name
+
         id_text = channel_element.find('id').text
         video_element = channel_element.find('Video')
         width_element = video_element.find('videoResolutionWidth')
         height_element = video_element.find('videoResolutionHeight')
         frame_rate_element = video_element.find('maxFrameRate')
 
-        if id_text == '1':
+        if id_text == '101':
             width_element.text = str(h264_stream_width)
             height_element.text = str(h264_stream_height)
             frame_rate_element.text = str(h264_stream_framerate * 100)
 
-        if id_text == '2':
+        if id_text == '102':
             width_element.text = str(mjpeg_stream_width)
             height_element.text = str(mjpeg_stream_height)
             frame_rate_element.text = str(mjpeg_stream_framerate * 100)
@@ -426,6 +499,28 @@ def set_video(cam_ip, password):
     request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
 
     process_request(cam_ip, video_url, password, request_data, 'Video streams set')
+
+
+def set_image_settings(cam_ip, password):
+    request = ElementTree.fromstring(image_settings_set_request)
+
+    request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
+
+    process_request(cam_ip, image_settings_url, password, request_data, 'Image settings set')
+
+
+def set_audio_settings(cam_ip, password):
+    request = ElementTree.fromstring(audio_settings_set_request)
+
+    speaker_vol = request.find('speakerVolume')
+    speaker_vol.text = "80"
+
+    noise_reduce = request.find('noisereduce')
+    noise_reduce.text = "false"
+
+    request_data = ElementTree.tostring(request, encoding='utf8', method='xml')
+
+    process_request(cam_ip, image_settings_url, password, request_data, 'Image settings set')
 
 
 def reboot_cam(cam_ip):
@@ -746,6 +841,12 @@ def process_request(cam_ip, request_url, password, request_data, operation, expe
     print_answer_status(operation, answer_text, expected_status_text)
 
 
+
+def get_status(cam_ip, request_url, password):
+    request = requests.get(get_service_url(cam_ip, request_url), auth=get_auth(admin_user_name, password))
+ 
+    print(request.text)
+    
 def print_answer_status(operation_text, answer_text, status_text):
     default_status_text = 'OK'
     answer_xml = ElementTree.fromstring(answer_text)
@@ -763,7 +864,7 @@ def print_answer_status(operation_text, answer_text, status_text):
         print(operation_text + ': success')
     else:
         error_answer = parse_error_xml(answer_text)
-        error_message = operation_text + ' error, answer is:\n' + error_answer
+        error_message = operation_text + ' error, answer is:\n' + answer_text
         raise RuntimeError(error_message)
 
 
@@ -792,13 +893,17 @@ def get_namespace(element):
 
 
 def main():
+
+    # get_status("192.168.2.51", '/ISAPI/System/TwoWayAudio/channels/1', "evelx118p")
+    # exit()
+
     try:
-        for current_cam_ip, new_cam_ip in cam_ips:
+        for current_cam_ip, cam_name in cam_ips:
             print('Processing cam %s:' % current_cam_ip)
 
             try:
                 current_password = set_activation(current_cam_ip)
-                set_cam_options(current_cam_ip, current_password, new_cam_ip)
+                set_cam_options(current_cam_ip, current_password, cam_name)
 
             except RuntimeError as e:
                 print(e.message)

@@ -19,9 +19,10 @@ from Crypto.PublicKey import RSA
 
 
 cam_ips = [
-    # (      OLD     ,        NEW      )
+    # (      IP     ,        Name      )
     # ('192.168.2.51', 'South-East'),
-    ('192.168.2.50', 'North-East')
+    # ('192.168.2.50', 'North-East'),
+    ('192.168.2.53', 'Front-Door')
 ]
 
 new_gateway = '0.0.0.0'
@@ -59,6 +60,8 @@ def set_cam_options(current_cam_ip, current_password, cam_name):
     set_osd(current_cam_ip, current_password)
     print("set_off_ip_ban_option...")
     set_off_ip_ban_option(current_cam_ip, current_password)
+    print("set_audio_settings...")
+    set_audio_settings(current_cam_ip, current_password)
     print("set_video...")
     set_video(current_cam_ip, current_password, cam_name)
     print("set_ip...")
@@ -66,8 +69,6 @@ def set_cam_options(current_cam_ip, current_password, cam_name):
     set_ip(current_cam_ip, current_password)
     print("set_image_settings...")
     set_image_settings(current_cam_ip, current_password)
-    print("set_audio_settings...")
-    set_audio_settings(current_cam_ip, current_password)
     print("set_password...")
     set_password(current_cam_ip, current_password)
     print("reboot_cam...")
@@ -560,7 +561,6 @@ def set_time(cam_ip, password):
         camera_timezone = convert_gmt_offset_to_internal_timezone(time_zone_gmt_offset)
 
         request = ElementTree.fromstring(time_set_request)
-
         timezone_element = request.find('timeZone')
         timezone_element.text = camera_timezone
 
@@ -894,7 +894,7 @@ def get_namespace(element):
 
 def main():
 
-    # get_status("192.168.2.51", '/ISAPI/System/TwoWayAudio/channels/1', "evelx118p")
+    # get_status("192.168.2.51", '/ISAPI/System/time', "evelx118p")
     # exit()
 
     try:
